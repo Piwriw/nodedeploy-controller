@@ -1,0 +1,24 @@
+# permissions for end users to edit nodedeploys.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: nodedeploy-editor-role
+rules:
+- apiGroups:
+  - node.nodedeploy
+  resources:
+  - nodedeploys
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - node.nodedeploy
+  resources:
+  - nodedeploys/status
+  verbs:
+  - get

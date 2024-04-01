@@ -1,0 +1,6 @@
+apiVersion: node.nodedeploy/v1
+kind: NodeDeploy
+metadata:
+  name: nodedeploy-sample
+spec:
+  # TODO(user): Add fields here

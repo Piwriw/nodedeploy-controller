@@ -1,0 +1,16 @@
+domain: nodedeploy
+layout:
+- go.kubebuilder.io/v3
+projectName: node-controller-kube
+repo: github.com/piwriw/nodedeploy-controller
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: nodedeploy
+  group: node
+  kind: NodeDeploy
+  path: github.com/piwriw/nodedeploy-controller/api/v1
+  version: v1
+version: "3"
