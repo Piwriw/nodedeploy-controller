@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -25,17 +26,75 @@ import (
 
 // NodeDeploySpec defines the desired state of NodeDeploy
 type NodeDeploySpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// +kubebuilder:validation:Required
+	NodeName string `json:"nodeName,omitempty"`
+	// +kubebuilder:validation:Required
+	NodeIP string `json:"nodeIP,omitempty"`
+	// +kubebuilder:validation:Required
+	NodeType NodeType `json:"nodeName,omitempty"`
+	// +optional
+	Labels map[string]string `json:"labels,omitempty"`
+	// +optional
+	Annotations map[string]string `json:"annotations,omitempty"`
+	// +optional
+	Taints []corev1.Taint `json:"taints,omitempty"`
+	//Platform string `json:"platform,omitempty"`
+	// +optional
+	KubernetesVersion string `json:"kubernetesVersion,omitempty"`
+	// +optional
+	IsEvicted bool `json:"isEvicted,omitempty"`
+	//UseSSHKey string `json:"useSSHKey,omitempty"`
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=inactive;active
+	NodeStatus NodeStatus `json:"nodeStatus,omitempty"`
+	// +optional
+	// +kubebuilder:default=3
+	// if MaxRetry <= 0 disable retry
+	MaxRetry int32 `json:"maxRetry,omitempty"`
+}
+type NodeType string
 
-	// Foo is an example field of NodeDeploy. Edit nodedeploy_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+const (
+	NodeWork     NodeType = "work"
+	NodeKubeedge NodeType = "kubeedge"
+)
+
+func (s NodeType) String() string {
+	return string(s)
+}
+
+type NodeStatus string
+
+const (
+	NodeInit          NodeStatus = "init"
+	NodeInactive      NodeStatus = "inactive"
+	NodeActive        NodeStatus = "active"
+	NodeLaunching     NodeStatus = "launching"
+	NodeLaunchFail    NodeStatus = "launchFail"
+	NodeDeprecating   NodeStatus = "deprecating"
+	NodeDeprecateFail NodeStatus = "deprecateFail"
+
+	NodeUnknown NodeStatus = ""
+)
+
+func (s NodeStatus) String() string {
+	if s == NodeUnknown {
+		return "unknown"
+	}
+
+	return string(s)
 }
 
 // NodeDeployStatus defines the observed state of NodeDeploy
 type NodeDeployStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	// +optional
+	NodeStatus NodeStatus `json:"nodeStatus,omitempty"`
+	// +optional
+	// In the case of abnormal exit, the state may stay in the intermediate status
+	// and a timeout mechanism is added to restore the status.
+	Deadline *metav1.Time `json:"deadline,omitempty"`
 }
 
 //+kubebuilder:object:root=true
