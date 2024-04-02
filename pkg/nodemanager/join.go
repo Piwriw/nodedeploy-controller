@@ -2,7 +2,6 @@ package nodemanager
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	nodev1 "github.com/piwriw/nodedeploy-controller/api/v1"
 	utils_ssh "github.com/piwriw/nodedeploy-controller/utils/ssh"
@@ -12,10 +11,12 @@ import (
 
 const (
 	PkgPathPrefix  = "/pkg/nodedeploy"
-	FilePathPrefix = "/path/to"
+	FilePathPrefix = "/path/to/nodedeploy"
 	check_arch_cmd = "uname -m"
 	mktemp_cmd     = "mktemp -d"
 )
+
+var ()
 
 type NodeJoin interface {
 	CheckArch(ctx context.Context, sshclient *utils_ssh.Client) (string, string, error)
@@ -40,17 +41,17 @@ func (wn WorkNode) Join(ctx context.Context, sshclient *utils_ssh.Client) error 
 	}
 	klog.Infof("成功获取到k8s的接入信息，kubeadm join %s --token %s  --discovery-token-ca-cert-hash %s\n", masterHostAndPort, token, hash)
 
-	workerNode_join_cmd := fmt.Sprintf("bash %s/07-work-join.sh %v %v %v", FilePathPrefix, masterHostAndPort, token, hash)
+	workerNode_join_cmd := fmt.Sprintf("bash %s/%s/07-work-join.sh %v %v %v", FilePathPrefix, nodev1.NodeWork.String(), masterHostAndPort, token, hash)
 	klog.Infof("上线时具体操作为: %v\n", workerNode_join_cmd)
 	_, err = sshclient.Exec(ctx, workerNode_join_cmd)
 	if err != nil {
-		return errors.New("workerNode start failed")
+		return fmt.Errorf("workerNode start failed,err:%s", err)
 	}
 	return nil
 }
 
 func (wn WorkNode) SetK8sComponents(ctx context.Context, sshclient *utils_ssh.Client, tempDir string) error {
-	node_setup_cmd := fmt.Sprintf("bash %s/06-k8s-setup.sh %v", FilePathPrefix, tempDir)
+	node_setup_cmd := fmt.Sprintf("bash %s/%s/06-k8s-setup.sh %v", FilePathPrefix, nodev1.NodeWork.String(), tempDir)
 	_, err := sshclient.Exec(ctx, node_setup_cmd)
 	if err != nil {
 		return fmt.Errorf("workerNode doesn't exist, %w", err)
@@ -58,7 +59,7 @@ func (wn WorkNode) SetK8sComponents(ctx context.Context, sshclient *utils_ssh.Cl
 	return nil
 }
 func (wn WorkNode) LoadImage(ctx context.Context, sshclient *utils_ssh.Client) error {
-	image_load_cmd := fmt.Sprintf("bash %s/05-load-image.sh ", FilePathPrefix)
+	image_load_cmd := fmt.Sprintf("bash %s/%s/05-load-image.sh %s ", FilePathPrefix, nodev1.NodeWork.String(), "images/work")
 	_, err := sshclient.Exec(ctx, image_load_cmd)
 	if err != nil {
 		return fmt.Errorf("the image file does not exist, %w", err)
@@ -66,7 +67,7 @@ func (wn WorkNode) LoadImage(ctx context.Context, sshclient *utils_ssh.Client) e
 	return nil
 }
 func (wn WorkNode) SetHostName(ctx context.Context, sshclient *utils_ssh.Client, hostName string) error {
-	set_hostname_cmd := fmt.Sprintf("bash %s/04-homename_setup.sh %v", FilePathPrefix, hostName)
+	set_hostname_cmd := fmt.Sprintf("bash %s/%s/04-homename_setup.sh %v", FilePathPrefix, nodev1.NodeWork.String(), hostName)
 	_, err := sshclient.Exec(ctx, set_hostname_cmd)
 	if err != nil {
 		return fmt.Errorf("The node has already been set up, %w", err)
@@ -74,7 +75,7 @@ func (wn WorkNode) SetHostName(ctx context.Context, sshclient *utils_ssh.Client,
 	return nil
 }
 func (wn WorkNode) SetDockerConf(ctx context.Context, sshclient *utils_ssh.Client, harborUser, harborPwd, harborEndpoint string) error {
-	docker_config_cmd := fmt.Sprintf("bash %s/03-docker_config.sh %v %v %v", FilePathPrefix)
+	docker_config_cmd := fmt.Sprintf("bash %s/%s/03-docker_config.sh %v %v %v", FilePathPrefix, nodev1.NodeWork.String(), harborUser, harborPwd, harborEndpoint)
 	_, err := sshclient.Exec(ctx, docker_config_cmd)
 	if err != nil {
 		return fmt.Errorf("docker config.json doesn't exist, %w", err)
@@ -82,7 +83,7 @@ func (wn WorkNode) SetDockerConf(ctx context.Context, sshclient *utils_ssh.Clien
 	return nil
 }
 func (wn WorkNode) InstallDocker(ctx context.Context, sshclient *utils_ssh.Client, tempDir, systemArch string) error {
-	docker_install_cmd := fmt.Sprintf("bash %s/02-docker_install.sh %v %v", FilePathPrefix, tempDir, systemArch)
+	docker_install_cmd := fmt.Sprintf("bash %s/%s/02-docker_install.sh %v %v", FilePathPrefix, nodev1.NodeWork.String(), tempDir, systemArch)
 	_, err := sshclient.Exec(ctx, docker_install_cmd)
 	if err != nil {
 		return fmt.Errorf("docker doesn't exist, %w", err)
@@ -90,7 +91,7 @@ func (wn WorkNode) InstallDocker(ctx context.Context, sshclient *utils_ssh.Clien
 	return nil
 }
 func (wn WorkNode) StopFirewalld(ctx context.Context, sshclient *utils_ssh.Client) error {
-	stop_firewall_cmd := fmt.Sprintf("bash %s/01-stopwalld.sh", FilePathPrefix)
+	stop_firewall_cmd := fmt.Sprintf("bash %s/%s/01-stopwalld.sh", FilePathPrefix, nodev1.NodeWork.String())
 	_, err := sshclient.Exec(ctx, stop_firewall_cmd)
 	if err != nil {
 		return fmt.Errorf("Failed to turn off the system firewall setting, %w", err)
@@ -100,7 +101,8 @@ func (wn WorkNode) StopFirewalld(ctx context.Context, sshclient *utils_ssh.Clien
 
 func (wn WorkNode) PrepareSetupPkg(ctx context.Context, sshclient *utils_ssh.Client, systemArch, version string) error {
 	//离线安装包源地址  /pkg/nodedeploy/work/arch-v1.21.tar.gz
-	src_setup_pkg := fmt.Sprintf("%s/%s/%v-%v.tar.gz", PkgPathPrefix, strings.ToLower(nodev1.NodeWork.String()), systemArch, version)
+	src_setup_pkg := fmt.Sprintf("%s/%s/%v-%v.tar.gz", PkgPathPrefix, nodev1.NodeWork.String(), systemArch, version)
+	klog.Infof("Offic Pkg Path:%s", src_setup_pkg)
 	//离线安装包目的地址
 	dest_setup_pkg := fmt.Sprintf("/tmp/nodedeploy-%v-%v.tar.gz", systemArch, version)
 	//从本地原地址下发到目标文件地址
@@ -109,10 +111,10 @@ func (wn WorkNode) PrepareSetupPkg(ctx context.Context, sshclient *utils_ssh.Cli
 		return fmt.Errorf("Upload failed, err: %s", err)
 	}
 	// /path/to/nodedeploy/work
-	mkdir_cmd := fmt.Sprintf("mkdir -p %s/nodedeploy/%s", FilePathPrefix, strings.ToLower(nodev1.NodeWork.String()))
+	mkdir_cmd := fmt.Sprintf("mkdir -p %s/%s", FilePathPrefix, nodev1.NodeWork.String())
 	_, err = sshclient.Exec(ctx, mkdir_cmd)
-	unzip_cmd := fmt.Sprintf("tar -xzvf %v -C %v", dest_setup_pkg, FilePathPrefix)
-	//将离线安装包解压到指定目录下 /path/to/
+	unzip_cmd := fmt.Sprintf("tar -xzvf %v -C %s/%s", dest_setup_pkg, FilePathPrefix, nodev1.NodeWork.String())
+	//将离线安装包解压到指定目录下 /path/to/nodedeploy/work
 	_, err = sshclient.Exec(ctx, unzip_cmd)
 	if err != nil {
 		return fmt.Errorf("Failed to extract the zip file, err: %s", err)
@@ -124,9 +126,9 @@ func (wn WorkNode) CheckKubernetes(version string) (string, error) {
 	//获取kubernetes的版本
 	versionK8s, err := getKubernetesVersionStr(version)
 	if err != nil {
-		return versionK8s, fmt.Errorf("invalid kubernetes version,currently version:%s, err: %s", versionK8s, err)
+		return "", fmt.Errorf("invalid kubernetes version, err: %s", err)
 	}
-	return versionK8s, err
+	return versionK8s, nil
 
 }
 

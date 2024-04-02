@@ -31,7 +31,21 @@ type NodeDeploySpec struct {
 	// +kubebuilder:validation:Required
 	NodeIP string `json:"nodeIP,omitempty"`
 	// +kubebuilder:validation:Required
-	NodeType NodeType `json:"nodeName,omitempty"`
+	NodeType NodeType `json:"nodeType,omitempty"`
+	// +kubebuilder:default="22"
+	// +optional
+	NodePort string `json:"nodePort,omitempty"`
+	// +kubebuilder:default=root
+	// +kubebuilder:validation:Required
+	NodeUser string `json:"nodeUser,omitempty"`
+	// +kubebuilder:validation:Required
+	NodePwd string `json:"nodePwd,omitempty"`
+	// +optional
+	HarborEndpoint string `json:"harborEndpoint,omitempty"`
+	// +optional
+	HarborUser string `json:"harborUser,omitempty"`
+	// +optional
+	HarborPwd string `json:"harborPwd,omitempty"`
 	// +optional
 	Labels map[string]string `json:"labels,omitempty"`
 	// +optional

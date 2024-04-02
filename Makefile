@@ -77,6 +77,10 @@ docker-build: test ## Build docker image with the manager.
 docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
 
+.PHONY: image
+image:
+	docker build -t controller:latest .
+
 ##@ Deployment
 
 ifndef ignore-not-found

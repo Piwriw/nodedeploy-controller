@@ -2,5 +2,40 @@ apiVersion: node.nodedeploy/v1
 kind: NodeDeploy
 metadata:
   name: nodedeploy-sample
+  namespace: node-controller-kube-system
 spec:
-  # TODO(user): Add fields here
+  # 节点名称
+  nodeName: "k8s-worker-test1"
+  # 节点IP
+  nodeIP: 192.168.28.142
+  # 节点类型 work|kubeedge
+  nodeType: work
+  nodePort: "22"
+  nodeUser: "root"
+  nodePwd: "Piwriw503420"
+  harborEndpoint: "http://192.168.28.130:30003"
+  harborUser: "admin"
+  harborPwd: "Harbor12345"
+  # 节点上线后添加的label
+  labels:
+    test-key: test-value
+  # 节点上线后添加的annotations
+  annotations:
+    test-an: test-value
+  # 节点上线后添加的污点
+  taints:
+    - key: test-key
+      value: test-value
+      effect: NoSchedule
+  # kubernetes 版本
+  kubernetesVersion: "1.21.14"
+  # 节点下线时是否驱逐pod
+  isEvicted: true
+  # 节点目标状态，active/inactive 分别对应上线和下线
+  nodeStatus: active
+  # 最大重试次数，默认值3，可以不传此参数
+  maxRetry: 3
+
+status:
+# 当前节点状态
+#  nodeStatus: inactive

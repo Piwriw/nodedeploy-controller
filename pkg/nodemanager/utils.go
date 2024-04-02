@@ -22,7 +22,9 @@ func ParseArch(systemArch string) (string, error) {
 	} else if strings.Contains(systemArch, "x86_64") || strings.Contains(systemArch, "amd64") {
 		systemArch = "amd64"
 		//否则就定义为未知类型，并且上报
-	}
-	return systemArch, fmt.Errorf("系统架构异常，请检查当前系统架构")
 
+	} else {
+		return systemArch, fmt.Errorf("系统架构异常，请检查当前系统架构")
+	}
+	return systemArch, nil
 }
