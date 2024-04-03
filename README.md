@@ -1,6 +1,8 @@
 ## Deploy-Heml
 helm upgrade --install node-deploy node-deploy   -n controller --create-namespace
-
+## CHANGELOG
+- 2024.4.3  piwriw/nodedeploy-controller:0.1 支持K8s 1.21.14 node节点上下线
+- 2024.4.3 piwriw/nodedeploy-controller:kubeeedge-0.1 仅支持kubeedge节点上下线
 # node-controller-kube
 // TODO(user): Add simple overview of use/purpose
 

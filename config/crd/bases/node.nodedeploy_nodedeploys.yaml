@@ -15,117 +15,117 @@ spec:
     singular: nodedeploy
   scope: Namespaced
   versions:
-  - name: v1
-    schema:
-      openAPIV3Schema:
-        description: NodeDeploy is the Schema for the nodedeploys API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
+    - name: v1
+      schema:
+        openAPIV3Schema:
+          description: NodeDeploy is the Schema for the nodedeploys API
+          properties:
+            apiVersion:
+              description: 'APIVersion defines the versioned schema of this representation
               of an object. Servers should convert recognized schemas to the latest
               internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
+              type: string
+            kind:
+              description: 'Kind is a string value representing the REST resource this
               object represents. Servers may infer this from the endpoint the client
               submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: NodeDeploySpec defines the desired state of NodeDeploy
-            properties:
-              annotations:
-                additionalProperties:
-                  type: string
-                type: object
-              harborEndpoint:
-                type: string
-              harborPwd:
-                type: string
-              harborUser:
-                type: string
-              isEvicted:
-                type: boolean
-              kubernetesVersion:
-                description: Platform string `json:"platform,omitempty"`
-                type: string
-              labels:
-                additionalProperties:
-                  type: string
-                type: object
-              maxRetry:
-                default: 3
-                description: if MaxRetry <= 0 disable retry
-                format: int32
-                type: integer
-              nodeIP:
-                type: string
-              nodeName:
-                type: string
-              nodePort:
-                default: "22"
-                type: string
-              nodePwd:
-                type: string
-              nodeStatus:
-                description: UseSSHKey string `json:"useSSHKey,omitempty"`
-                enum:
-                - inactive
-                - active
-                type: string
-              nodeType:
-                type: string
-              nodeUser:
-                default: root
-                type: string
-              taints:
-                items:
-                  description: The node this Taint is attached to has the "effect"
-                    on any pod that does not tolerate the Taint.
-                  properties:
-                    effect:
-                      description: Required. The effect of the taint on pods that
-                        do not tolerate the taint. Valid effects are NoSchedule, PreferNoSchedule
-                        and NoExecute.
-                      type: string
-                    key:
-                      description: Required. The taint key to be applied to a node.
-                      type: string
-                    timeAdded:
-                      description: TimeAdded represents the time at which the taint
-                        was added. It is only written for NoExecute taints.
-                      format: date-time
-                      type: string
-                    value:
-                      description: The taint value corresponding to the taint key.
-                      type: string
-                  required:
-                  - effect
-                  - key
+              type: string
+            metadata:
+              type: object
+            spec:
+              description: NodeDeploySpec defines the desired state of NodeDeploy
+              properties:
+                annotations:
+                  additionalProperties:
+                    type: string
                   type: object
-                type: array
-            type: object
-          status:
-            description: NodeDeployStatus defines the observed state of NodeDeploy
-            properties:
-              deadline:
-                description: In the case of abnormal exit, the state may stay in the
-                  intermediate status and a timeout mechanism is added to restore
-                  the status.
-                format: date-time
-                type: string
-              nodeStatus:
-                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                harborEndpoint:
+                  type: string
+                harborPwd:
+                  type: string
+                harborUser:
+                  type: string
+                isEvicted:
+                  type: boolean
+                labels:
+                  additionalProperties:
+                    type: string
+                  type: object
+                maxRetry:
+                  default: 3
+                  description: if MaxRetry <= 0 disable retry
+                  format: int32
+                  type: integer
+                nodeIP:
+                  type: string
+                nodeName:
+                  type: string
+                nodePort:
+                  default: "22"
+                  type: string
+                nodePwd:
+                  type: string
+                nodeStatus:
+                  description: UseSSHKey string `json:"useSSHKey,omitempty"`
+                  enum:
+                    - inactive
+                    - active
+                  type: string
+                nodeType:
+                  type: string
+                nodeUser:
+                  default: root
+                  type: string
+                nodeVersion:
+                  description: Platform string `json:"platform,omitempty"`
+                  type: string
+                taints:
+                  items:
+                    description: The node this Taint is attached to has the "effect"
+                      on any pod that does not tolerate the Taint.
+                    properties:
+                      effect:
+                        description: Required. The effect of the taint on pods that
+                          do not tolerate the taint. Valid effects are NoSchedule, PreferNoSchedule
+                          and NoExecute.
+                        type: string
+                      key:
+                        description: Required. The taint key to be applied to a node.
+                        type: string
+                      timeAdded:
+                        description: TimeAdded represents the time at which the taint
+                          was added. It is only written for NoExecute taints.
+                        format: date-time
+                        type: string
+                      value:
+                        description: The taint value corresponding to the taint key.
+                        type: string
+                    required:
+                      - effect
+                      - key
+                    type: object
+                  type: array
+              type: object
+            status:
+              description: NodeDeployStatus defines the observed state of NodeDeploy
+              properties:
+                deadline:
+                  description: In the case of abnormal exit, the state may stay in the
+                    intermediate status and a timeout mechanism is added to restore
+                    the status.
+                  format: date-time
+                  type: string
+                nodeStatus:
+                  description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
-                type: string
-            type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
+                  type: string
+              type: object
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}
 status:
   acceptedNames:
     kind: ""

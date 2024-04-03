@@ -1,3 +1,4 @@
+
 apiVersion: node.nodedeploy/v1
 kind: NodeDeploy
 metadata:
@@ -9,7 +10,7 @@ spec:
   # 节点IP
   nodeIP: 192.168.28.142
   # 节点类型 work|kubeedge
-  nodeType: kubeedge
+  nodeType: work
   nodePort: "22"
   nodeUser: "root"
   nodePwd: "Piwriw503420"
@@ -28,7 +29,7 @@ spec:
       value: test-value
       effect: NoSchedule
   # nodeVersion 版本
-  nodeVersion: "1.12.3"
+  nodeVersion: "1.21.14"
   # 节点下线时是否驱逐pod
   isEvicted: true
   # 节点目标状态，active/inactive 分别对应上线和下线

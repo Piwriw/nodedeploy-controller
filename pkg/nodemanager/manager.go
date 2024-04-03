@@ -32,8 +32,8 @@ func (n *NodeManager) Deprecate(ctx context.Context) error {
 	switch n.nodeInfo.NodeType {
 	case nodev1.NodeWork.String():
 		nodedisJoin = new(WorkNode)
-		//case nodev1.NodeKubeedge.String():
-		//	nodeJoin = new(KubEdgeNode)
+	case nodev1.NodeKubeedge.String():
+		nodedisJoin = new(KubEdgeNode)
 	}
 	progress := NewProgress(1)
 
@@ -61,8 +61,8 @@ func (n *NodeManager) LaunchByCmd(ctx context.Context) error {
 	switch n.nodeInfo.NodeType {
 	case nodev1.NodeWork.String():
 		nodeJoin = new(WorkNode)
-		//case nodev1.NodeKubeedge.String():
-		//	nodeJoin = new(KubEdgeNode)
+	case nodev1.NodeKubeedge.String():
+		nodeJoin = new(KubEdgeNode)
 	}
 	sshclient, err := utils_ssh.NewClient(n.nodeInfo.NodeIP, n.nodeInfo.NodePort, n.nodeInfo.NodeUser, n.nodeInfo.NodePwd)
 	if err != nil {
@@ -71,7 +71,7 @@ func (n *NodeManager) LaunchByCmd(ctx context.Context) error {
 	progress := NewProgress(10)
 	//1.检查系统架构
 	n.logMessage("Check architecture", "Check architecture", progress.Add())
-	systemArch, tempDir, err := nodeJoin.CheckArch(ctx, sshclient)
+	systemArch, err := nodeJoin.CheckArch(ctx, sshclient)
 	if err != nil {
 		n.logMessage("Check architecture", "Check architecture", progress.String())
 		return err
@@ -79,7 +79,7 @@ func (n *NodeManager) LaunchByCmd(ctx context.Context) error {
 
 	//2. 检测 kubernetes 版本
 	n.logMessage("Check Kubernetes Version", "Check Kubernetes Version", progress.Add())
-	versionK8s, err := nodeJoin.CheckKubernetes(n.nodeDeploy.Spec.KubernetesVersion)
+	versionK8s, err := nodeJoin.CheckNodeVersion(n.nodeDeploy.Spec.NodeVersion)
 	if err != nil {
 		n.logMessage("Kubernetes Install", "invalid kubernetes version", progress.String())
 		return err
@@ -101,7 +101,7 @@ func (n *NodeManager) LaunchByCmd(ctx context.Context) error {
 
 	//5. 安装 docker
 	n.logMessage("Docker Install", "Installing docker", progress.Add())
-	if err = nodeJoin.InstallDocker(ctx, sshclient, tempDir, systemArch); err != nil {
+	if err = nodeJoin.InstallDocker(ctx, sshclient, systemArch); err != nil {
 		n.logMessage("Docker Install", fmt.Sprintf("docker doesn't exist, %s", err), progress.String())
 		return err
 	}
@@ -129,7 +129,7 @@ func (n *NodeManager) LaunchByCmd(ctx context.Context) error {
 
 	//9. 给节点安装 k8s 组件
 	n.logMessage(" Node Setup", "Setup workerNode", progress.Add())
-	if err = nodeJoin.SetK8sComponents(ctx, sshclient, tempDir); err != nil {
+	if err = nodeJoin.SetNodeComponents(ctx, sshclient); err != nil {
 		n.logMessage("Node Setup ", fmt.Sprintf("workerNode doesn't exist, %s", err), progress.String())
 		return err
 	}

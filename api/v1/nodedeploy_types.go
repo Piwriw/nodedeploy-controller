@@ -54,7 +54,7 @@ type NodeDeploySpec struct {
 	Taints []corev1.Taint `json:"taints,omitempty"`
 	//Platform string `json:"platform,omitempty"`
 	// +optional
-	KubernetesVersion string `json:"kubernetesVersion,omitempty"`
+	NodeVersion string `json:"nodeVersion,omitempty"`
 	// +optional
 	IsEvicted bool `json:"isEvicted,omitempty"`
 	//UseSSHKey string `json:"useSSHKey,omitempty"`

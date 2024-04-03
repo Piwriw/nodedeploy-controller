@@ -264,10 +264,10 @@ func (r *NodeDeployReconciler) preflight(ctx context.Context, nodeDeploy *nodev1
 		reason = "nodeIP is an invalid ip address"
 		return
 	}
-	//KubernetesVersion, 检测 k8s 版本
-	_, validateErr = semver.NewVersion(nodeDeploy.Spec.KubernetesVersion)
+	//NodeVersion, 检测 k8s 版本
+	_, validateErr = semver.NewVersion(nodeDeploy.Spec.NodeVersion)
 	if validateErr != nil {
-		reason = fmt.Sprintf("invalid KubernetesVersion, err: %s", validateErr)
+		reason = fmt.Sprintf("invalid NodeVersion, err: %s", validateErr)
 		return
 	}
 

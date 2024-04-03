@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -47,6 +48,47 @@ type BootstrapToken struct {
 	Groups []string `json:"groups,omitempty"`
 }
 
+type CloudCoreConfig struct {
+	Modules struct {
+		CloudHub struct {
+			AdvertiseAddress []string `yaml:"advertiseAddress"`
+			Websocket        struct {
+				Address string `yaml:"address"`
+				Enable  bool   `yaml:"enable"`
+				Port    string `yaml:"port"`
+			} `yaml:"websocket"`
+		} `yaml:"cloudHub"`
+	} `yaml:"modules"`
+}
+
+func GetKubeEdgeJoinInfo() (cloudHost []string, Port string, Token string, err error) {
+	//使用configmap将master的kubeconfig文件挂载到容器中的/controllers目录下
+	kubeconfig := "/pkg/kube-config/config"
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		return nil, "", "", err
+	}
+	clientSet, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, "", "", err
+	}
+	cloudcoreCfg, err := clientSet.CoreV1().ConfigMaps("kubeedge").Get(context.TODO(), "cloudcore", metav1.GetOptions{})
+	if err != nil {
+		return nil, "", "", err
+	}
+	bytesCfg := []byte(cloudcoreCfg.Data["cloudcore.yaml"])
+	cloudCfg := &CloudCoreConfig{}
+	err = yaml.Unmarshal(bytesCfg, cloudCfg)
+	if err != nil {
+		return nil, "", "", err
+	}
+	secret, err := clientSet.CoreV1().Secrets("kubeedge").Get(context.Background(), "tokensecret", metav1.GetOptions{})
+	if err != nil {
+		return
+	}
+	token := string(secret.Data["tokendata"])
+	return cloudCfg.Modules.CloudHub.AdvertiseAddress, cloudCfg.Modules.CloudHub.Websocket.Port, token, nil
+}
 func GetWorkJoinInfo() (masterHostAndPort, token, certHash string, err error) {
 	//使用configmap将master的kubeconfig文件挂载到容器中的/controllers目录下
 	kubeconfig := "/pkg/kube-config/config"

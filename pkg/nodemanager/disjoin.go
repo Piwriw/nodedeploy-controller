@@ -20,3 +20,12 @@ func (wn WorkNode) DisJoin(ctx context.Context, sshclient *utils_ssh.Client) err
 	}
 	return nil
 }
+func (kn KubEdgeNode) DisJoin(ctx context.Context, sshclient *utils_ssh.Client) error {
+
+	edgeNode_disjoin_cmd := fmt.Sprintf("bash %s/%s/08-edgecore_disjoin.sh ", FilePathPrefix, nodev1.NodeKubeedge.String())
+	_, err := sshclient.Exec(ctx, edgeNode_disjoin_cmd)
+	if err != nil {
+		return fmt.Errorf("%s, err: %w", "fail to deprecate", err)
+	}
+	return nil
+}
