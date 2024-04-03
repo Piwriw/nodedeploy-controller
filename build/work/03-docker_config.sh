@@ -10,7 +10,7 @@ export HARBOR_ADDR=${HARBOR_ADDR}
 # 检查docker config.json是否存在
 isExistedDocker() {
   docker_config_path="/etc/docker/daemon.json"
-
+  chmod +x   ${bashpath}/dependence/docker_daemon_utils
   # 检查文件是否存在
   if [ -e "$docker_config_path" ]; then
      ${bashpath}/utils/docker_daemon_utils
