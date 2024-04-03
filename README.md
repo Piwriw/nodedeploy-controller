@@ -1,3 +1,6 @@
+## Deploy-Heml
+helm upgrade --install node-deploy node-deploy   -n controller --create-namespace
+
 # node-controller-kube
 // TODO(user): Add simple overview of use/purpose
 

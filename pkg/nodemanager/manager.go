@@ -25,6 +25,37 @@ func New(recorder record.EventRecorder, nodeDeploy *nodev1.NodeDeploy, nodeInfo 
 		nodeInfo:   nodeInfo,
 	}
 }
+
+// Deprecate 节点下线
+func (n *NodeManager) Deprecate(ctx context.Context) error {
+	var nodedisJoin NodeDisJoin
+	switch n.nodeInfo.NodeType {
+	case nodev1.NodeWork.String():
+		nodedisJoin = new(WorkNode)
+		//case nodev1.NodeKubeedge.String():
+		//	nodeJoin = new(KubEdgeNode)
+	}
+	progress := NewProgress(1)
+
+	sshclient, err := utils_ssh.NewClient(n.nodeInfo.NodeIP, n.nodeInfo.NodePort, n.nodeInfo.NodeUser, n.nodeInfo.NodePwd)
+	if err != nil {
+		klog.Fatalf("Failed to create new client: %v", err)
+	}
+
+	n.logMessage("Deprecate Node", "shutdown workerNode", progress.Add())
+	err = nodedisJoin.DisJoin(ctx, sshclient)
+	if err != nil {
+		n.logMessage("Deprecate Node", "fail to deprecate", progress.String())
+		return err
+	}
+
+	n.recorder.Event(n.nodeDeploy, corev1.EventTypeNormal, "Deprecate", "deprecate success")
+	n.logMessage("Deprecate Node", "deprecate success", progress.String())
+
+	return nil
+}
+
+// LaunchByCmd 节点上线
 func (n *NodeManager) LaunchByCmd(ctx context.Context) error {
 	var nodeJoin NodeJoin
 	switch n.nodeInfo.NodeType {

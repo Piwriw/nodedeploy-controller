@@ -79,7 +79,7 @@ docker-push: ## Push docker image with the manager.
 
 .PHONY: image
 image:
-	docker build -t controller:latest .
+	docker build -t nodedeploy-controller:latest .
 
 ##@ Deployment
 

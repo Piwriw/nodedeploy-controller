@@ -69,3 +69,14 @@ func TestLoadImage(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+func TestDeprecate(t *testing.T) {
+	sshclient, err := utils_ssh.NewClient("192.168.28.142", "22", "root", "Piwriw503420")
+	if err != nil {
+		t.Fatal(err)
+	}
+	workerNode_disjoin_cmd := fmt.Sprintf("bash %s/%s/08-work-disjoin.sh ", FilePathPrefix, nodev1.NodeWork.String())
+	_, err = sshclient.Exec(context.TODO(), workerNode_disjoin_cmd)
+	if err != nil {
+		t.Fatal(err)
+	}
+}

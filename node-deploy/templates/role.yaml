@@ -13,6 +13,8 @@ rules:
       - ""
     resources:
       - nodes
+      - pods
+      - DaemonSets
     verbs:
       - delete
       - get

@@ -409,34 +409,35 @@ func (r *NodeDeployReconciler) finalize(ctx context.Context, nodeDeploy *nodev1.
 
 // 节点下线
 func (r *NodeDeployReconciler) deprecateNode(ctx context.Context, nodeDeploy *nodev1.NodeDeploy, nodeInfo *pkgtypes.NodeInfo) (success bool, err error) {
-	//node := &corev1.Node{}
-	//err = r.Get(ctx, types.NamespacedName{Namespace: corev1.NamespaceAll, Name: nodeInfo.NodeName}, node)
-	//if err != nil {
-	//	if !apierrors.IsNotFound(err) {
-	//		return false, err
-	//	} else {
-	//		return false, fmt.Errorf("try to deprecate a non-existent node")
-	//	}
-	//}
-	//if nodeDeploy.Spec.IsEvicted {
-	//	err = drainNode(r.Clientset, node)
-	//	if err != nil {
-	//		r.Recorder.Event(nodeDeploy, corev1.EventTypeWarning, pkgtypes.EventDeprecateNode, fmt.Sprintf("failed to drain node, err: %s", err))
-	//		return false, nil
-	//	}
-	//}
-	//
-	//manager := nodemanager.New(r.Recorder, nodeDeploy, nodeInfo)
-	//err = manager.Deprecate(ctx)
-	//if err != nil {
-	//	return false, nil
-	//}
-	//
-	//if err = r.Delete(ctx, node); err != nil {
-	//	r.Recorder.Event(nodeDeploy, corev1.EventTypeWarning, pkgtypes.EventDeprecateNode, "failed to delete node")
-	//	return false, err
-	//}
-	//r.Recorder.Event(nodeDeploy, corev1.EventTypeNormal, pkgtypes.EventDeprecateNode, "node deleted successfully")
+	node := &corev1.Node{}
+	err = r.Get(ctx, types.NamespacedName{Namespace: corev1.NamespaceAll, Name: nodeInfo.NodeName}, node)
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			return false, err
+		} else {
+			return false, fmt.Errorf("try to deprecate a non-existent node")
+		}
+	}
+	if nodeDeploy.Spec.IsEvicted {
+		err = drainNode(r.ClientSet, node)
+		if err != nil {
+			r.Recorder.Event(nodeDeploy, corev1.EventTypeWarning, pkgtypes.EventDeprecateNode, fmt.Sprintf("failed to drain node, err: %s", err))
+			return false, nil
+		}
+	}
+
+	manager := nodemanager.New(r.Recorder, nodeDeploy, nodeInfo)
+	// 节点下线
+	err = manager.Deprecate(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.Delete(ctx, node); err != nil {
+		r.Recorder.Event(nodeDeploy, corev1.EventTypeWarning, pkgtypes.EventDeprecateNode, "failed to delete node")
+		return false, err
+	}
+	r.Recorder.Event(nodeDeploy, corev1.EventTypeNormal, pkgtypes.EventDeprecateNode, "node deleted successfully")
 
 	return true, nil
 }
