@@ -75,6 +75,12 @@ func (wn WorkNode) SetHostName(ctx context.Context, sshclient *utils_ssh.Client,
 	return nil
 }
 func (wn WorkNode) SetDockerConf(ctx context.Context, sshclient *utils_ssh.Client, harborUser, harborPwd, harborEndpoint string) error {
+	// if Harbor info is null will pass to SetDockerConf
+	// avoid some mistakes in  /etc/docker/daemon.json
+	if harborUser == "" || harborPwd == "" || harborEndpoint == "" {
+		klog.Warningf("Habror is NULL Will Pass SetDockerConf")
+		return nil
+	}
 	klog.Infof("Habror Info: User:%s,PassWord:%s,Addr:%s", harborUser, harborPwd, harborEndpoint)
 	docker_config_cmd := fmt.Sprintf("bash %s/%s/03-docker_config.sh %v %v %v", FilePathPrefix, strings.ToLower(nodev1.NodeWork.String()), harborUser, harborPwd, harborEndpoint)
 	_, err := sshclient.Exec(ctx, docker_config_cmd)
@@ -233,6 +239,12 @@ func (k KubEdgeNode) InstallDocker(ctx context.Context, sshclient *utils_ssh.Cli
 }
 
 func (k KubEdgeNode) SetDockerConf(ctx context.Context, sshclient *utils_ssh.Client, harborUser, harborPwd, harborEndpoint string) error {
+	// if Harbor info is null will pass to SetDockerConf
+	// avoid some mistakes in  /etc/docker/daemon.json
+	if harborUser == "" || harborPwd == "" || harborEndpoint == "" {
+		klog.Warningf("Habror is NULL Will Pass SetDockerConf")
+		return nil
+	}
 	klog.Infof("Habror Info: User:%s,PassWord:%s,Addr:%s", harborUser, harborPwd, harborEndpoint)
 	docker_config_cmd := fmt.Sprintf("bash %s/%s/03-docker_config.sh %s %s %s", FilePathPrefix, strings.ToLower(nodev1.NodeKubeedge.String()), harborUser, harborPwd, harborEndpoint)
 	_, err := sshclient.Exec(ctx, docker_config_cmd)
