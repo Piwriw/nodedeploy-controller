@@ -4,6 +4,12 @@ metadata:
   name: node-deploy-cluster-role
 rules:
   - apiGroups:
+      - "apps"
+    resources:
+      - daemonsets
+      - secrets
+    verbs: ["get", "create", "patch","delete"]
+  - apiGroups:
       - ""
     resources:
       - events
@@ -14,7 +20,6 @@ rules:
     resources:
       - nodes
       - pods
-      - daemonsets
       - configmaps
       - secrets
     verbs:
