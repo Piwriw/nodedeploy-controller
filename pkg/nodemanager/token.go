@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	clientset "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	clientcertutil "k8s.io/client-go/util/cert"
@@ -62,16 +63,15 @@ type CloudCoreConfig struct {
 }
 
 func GetKubeEdgeJoinInfo() (cloudHost []string, Port string, Token string, err error) {
-	//使用configmap将master的kubeconfig文件挂载到容器中的/controllers目录下
-	kubeconfig := "/pkg/kube-config/config"
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	inClusterConfig, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, "", "", err
+		return nil, "", "", errors.Errorf("Get InClusterConfig Failed,err:%s ", err)
 	}
-	clientSet, err := kubernetes.NewForConfig(config)
+	clientSet, err := kubernetes.NewForConfig(inClusterConfig)
 	if err != nil {
-		return nil, "", "", err
+		return nil, "", "", errors.Errorf("Create ClientSet  By InClusterConfig Failed,err:%s ", err)
 	}
+
 	cloudcoreCfg, err := clientSet.CoreV1().ConfigMaps("kubeedge").Get(context.TODO(), "cloudcore", metav1.GetOptions{})
 	if err != nil {
 		return nil, "", "", err
@@ -90,23 +90,24 @@ func GetKubeEdgeJoinInfo() (cloudHost []string, Port string, Token string, err e
 	return cloudCfg.Modules.CloudHub.AdvertiseAddress, cloudCfg.Modules.CloudHub.Websocket.Port, token, nil
 }
 func GetWorkJoinInfo() (masterHostAndPort, token, certHash string, err error) {
-	//使用configmap将master的kubeconfig文件挂载到容器中的/controllers目录下
-	kubeconfig := "/pkg/kube-config/config"
-	//kubeconfig := "config"
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	inClusterConfig, err := rest.InClusterConfig()
 	if err != nil {
-		panic(err)
+		return "", "", "", errors.Errorf("Get InClusterConfig Failed,err:%s ", err)
 	}
-	clientSet, err := kubernetes.NewForConfig(config)
+	clientSet, err := kubernetes.NewForConfig(inClusterConfig)
 	if err != nil {
-		panic(err)
+		return "", "", "", errors.Errorf("Create ClientSet  By InClusterConfig Failed,err:%s ", err)
 	}
-	// load the default cluster config
-	cfg, err := clientcmd.LoadFromFile(kubeconfig)
+	K8sConfMap, err := clientSet.CoreV1().ConfigMaps("kube-public").Get(context.TODO(), "cluster-info", metav1.GetOptions{})
 	if err != nil {
-		return "", "", "", errors.Wrap(err, "failed to load kubeconfig")
+		return "", "", "", errors.Errorf("Get K8sConfigMap Failed,err:%s ", err)
 	}
-	_, clusterConfig := GetClusterFromKubeConfig(cfg)
+	kubeconfigBytes := []byte(K8sConfMap.Data["kubeconfig"])
+	fromInClusterConfig, err := GetClusterFromInClusterConfig(kubeconfigBytes)
+	if err != nil {
+		return "", "", "", errors.Errorf("Get GetClusterFromInClusterConfig Failed,err:%s ", err)
+	}
+	_, clusterConfig := GetClusterFromKubeConfig(fromInClusterConfig)
 	if clusterConfig == nil {
 		return "", "", "", errors.New("failed to get default cluster config")
 	}
@@ -239,6 +240,36 @@ func NewBootstrapToken(token string) (*BootstrapToken, error) {
 		return nil, errors.Errorf("the bootstrap token %q was not of the form %q", token, bootstrapapi.BootstrapTokenPattern)
 	}
 	return &BootstrapToken{Token: &BootstrapTokenString{ID: substrs[1], Secret: substrs[2]}}, nil
+}
+func GetClusterFromInClusterConfig(kubeconfigBytes []byte) (*clientcmdapi.Config, error) {
+
+	config, err := clientcmd.Load(kubeconfigBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	// set LocationOfOrigin on every Cluster, User, and Context
+	for key, obj := range config.AuthInfos {
+		config.AuthInfos[key] = obj
+	}
+	for key, obj := range config.Clusters {
+		config.Clusters[key] = obj
+	}
+	for key, obj := range config.Contexts {
+		config.Contexts[key] = obj
+	}
+
+	if config.AuthInfos == nil {
+		config.AuthInfos = map[string]*clientcmdapi.AuthInfo{}
+	}
+	if config.Clusters == nil {
+		config.Clusters = map[string]*clientcmdapi.Cluster{}
+	}
+	if config.Contexts == nil {
+		config.Contexts = map[string]*clientcmdapi.Context{}
+	}
+
+	return config, nil
 }
 
 // GetClusterFromKubeConfig returns the default Cluster of the specified KubeConfig

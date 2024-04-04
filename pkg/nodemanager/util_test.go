@@ -9,6 +9,7 @@ import (
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 	"strings"
@@ -145,4 +146,31 @@ func TestVersion(t *testing.T) {
 	}
 	t.Log(versionK8s)
 
+}
+
+func TestGetInfoIn(t *testing.T) {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	clientSet, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cloudcoreCfg, err := clientSet.CoreV1().ConfigMaps("kubeedge").Get(context.TODO(), "cloudcore", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	bytesCfg := []byte(cloudcoreCfg.Data["cloudcore.yaml"])
+	cloudCfg := &CloudCoreConfig{}
+	err = yaml.Unmarshal(bytesCfg, cloudCfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	secret, err := clientSet.CoreV1().Secrets("kubeedge").Get(context.Background(), "tokensecret", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	token := string(secret.Data["tokendata"])
+	t.Logf("token:%s Address:%v Port：%s", token, cloudCfg.Modules.CloudHub.AdvertiseAddress, cloudCfg.Modules.CloudHub.Websocket.Port)
 }

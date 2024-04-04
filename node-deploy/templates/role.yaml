@@ -2,19 +2,21 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: node-deploy-cluster-role
-  namespace: "{{ .Release.Namespace }}"
 rules:
   - apiGroups:
       - ""
     resources:
       - events
+      - secrets
     verbs: ["get", "create", "patch"]
   - apiGroups:
       - ""
     resources:
       - nodes
       - pods
-      - DaemonSets
+      - daemonsets
+      - configmaps
+      - secrets
     verbs:
       - delete
       - get
@@ -22,13 +24,6 @@ rules:
       - patch
       - update
       - watch
-  - apiGroups:
-      - ""
-    resources:
-      - secrets
-    verbs:
-      - get
-      - list
   - apiGroups:
       - node.nodedeploy
     resources:

@@ -233,6 +233,7 @@ func (k KubEdgeNode) InstallDocker(ctx context.Context, sshclient *utils_ssh.Cli
 }
 
 func (k KubEdgeNode) SetDockerConf(ctx context.Context, sshclient *utils_ssh.Client, harborUser, harborPwd, harborEndpoint string) error {
+	klog.Infof("Habror Info: User:%s,PassWord:%s,Addr:%s", harborUser, harborPwd, harborEndpoint)
 	docker_config_cmd := fmt.Sprintf("bash %s/%s/03-docker_config.sh %s %s %s", FilePathPrefix, strings.ToLower(nodev1.NodeKubeedge.String()), harborUser, harborPwd, harborEndpoint)
 	_, err := sshclient.Exec(ctx, docker_config_cmd)
 	if err != nil {

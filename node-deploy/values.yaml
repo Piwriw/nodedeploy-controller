@@ -94,22 +94,23 @@ volumes:
   - name: timezone-volume
     hostPath:
       path: /etc/localtime
-  - configMap:
-      name: kube-config
-    name: kube-config
 
 # Additional volumeMounts on the output Deployment definition.
 volumeMounts:
   - name: timezone-volume
     mountPath: /etc/localtime
     readOnly: true
-  - name: kube-config
-    mountPath: /pkg/kube-config/config
-    subPath: config
 
 
 nodeSelector: { }
 
 tolerations: [ ]
 
-affinity: { }
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.kubernetes.io/edge
+              operator: DoesNotExist
+

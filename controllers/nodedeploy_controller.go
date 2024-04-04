@@ -80,7 +80,6 @@ func (r *NodeDeployReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-
 	//判断节点状态,如果没有节点状态说明是第一次加入
 	if nodeDeploy.Status.NodeStatus == nodev1.NodeUnknown {
 		r.Recorder.Event(nodeDeploy, corev1.EventTypeNormal, pkgtypes.EventChangeStatus, "init status")
