@@ -7,6 +7,7 @@ import (
 	nodev1 "github.com/piwriw/nodedeploy-controller/api/v1"
 	"github.com/piwriw/nodedeploy-controller/pkg/types"
 	utils_ssh "github.com/piwriw/nodedeploy-controller/utils/ssh"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
@@ -39,7 +40,7 @@ func (n *NodeManager) Deprecate(ctx context.Context) error {
 
 	sshclient, err := utils_ssh.NewClient(n.nodeInfo.NodeIP, n.nodeInfo.NodePort, n.nodeInfo.NodeUser, n.nodeInfo.NodePwd)
 	if err != nil {
-		klog.Fatalf("Failed to create new client: %v", err)
+		klog.Errorf("Failed to create new client: %v", err)
 	}
 
 	n.logMessage("Deprecate Node", "shutdown workerNode", progress.Add())
@@ -66,7 +67,8 @@ func (n *NodeManager) LaunchByCmd(ctx context.Context) error {
 	}
 	sshclient, err := utils_ssh.NewClient(n.nodeInfo.NodeIP, n.nodeInfo.NodePort, n.nodeInfo.NodeUser, n.nodeInfo.NodePwd)
 	if err != nil {
-		klog.Fatalf("Create ssh client failed,err:%s", err)
+		klog.Errorf("Create ssh client failed,err:%s", err)
+		return errors.Errorf("Create ssh client failed")
 	}
 	progress := NewProgress(10)
 	//1.检查系统架构

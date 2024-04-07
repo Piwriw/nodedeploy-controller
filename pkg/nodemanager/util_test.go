@@ -121,7 +121,7 @@ func TestCheckArch(t *testing.T) {
 	lines := strings.Split(temp_dir_str, "\n")
 	temp_dir := lines[0]
 	if err != nil {
-		klog.Fatalf("Failed to create new temp dir: %v", err)
+		klog.Errorf("Failed to create new temp dir: %v", err)
 	}
 	klog.Infof("The temporary directory [%v] is created\n", temp_dir)
 

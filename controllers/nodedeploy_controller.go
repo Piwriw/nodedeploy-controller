@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"github.com/coreos/go-semver/semver"
 	"github.com/piwriw/nodedeploy-controller/pkg/nodemanager"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,6 +42,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	retryV4 "github.com/avast/retry-go/v4"
 	nodev1 "github.com/piwriw/nodedeploy-controller/api/v1"
 	pkgtypes "github.com/piwriw/nodedeploy-controller/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
@@ -157,20 +159,31 @@ func (r *NodeDeployReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 	if nodeDeploy.Spec.NodeStatus == nodev1.NodeActive {
-		// 节点上线
-		if err = r.prepare(ctx, nodeDeploy, nodev1.NodeLaunching); err != nil {
-			return ctrl.Result{}, err
-		}
-		success, err = r.launchNode(ctx, nodeDeploy, nodeInfo)
-		if !success {
-			klog.Warningf("节点上线时出现异常，导致无法正常上线 ,err: %v\n", err)
-			return ctrl.Result{}, nil
-		}
 		var status nodev1.NodeStatus
-		if success {
-			status = nodev1.NodeActive
-		} else {
-			status = nodev1.NodeLaunchFail
+
+		// 节点上线
+		err := retryV4.Do(
+			func() error {
+				if err = r.prepare(ctx, nodeDeploy, nodev1.NodeLaunching); err != nil {
+					return err
+				}
+				success, err = r.launchNode(ctx, nodeDeploy, nodeInfo)
+				if !success {
+					status = nodev1.NodeLaunchFail
+				} else {
+					status = nodev1.NodeActive
+				}
+				if err != nil {
+					return errors.Errorf("LaunchNode failed,err:%s", err)
+				}
+				return nil
+			},
+			retryV4.Delay(5*time.Second),
+			retryV4.Attempts(uint(nodeDeploy.Spec.MaxRetry)),
+			retryV4.DelayType(retryV4.FixedDelay),
+		)
+		if err != nil {
+			klog.Warningf("节点上线时出现异常，导致无法正常上线 ,err: %v\n", err)
 		}
 		//上线后确定状态并更新
 		if err = r.finalize(ctx, nodeDeploy, status); err != nil {
@@ -183,20 +196,30 @@ func (r *NodeDeployReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			r.Recorder.Event(nodeDeploy, corev1.EventTypeWarning, pkgtypes.EventInvalidStatus, "ignore init to inactive")
 			return ctrl.Result{}, nil
 		}
-
-		//下线前确定状态
-		if err = r.prepare(ctx, nodeDeploy, nodev1.NodeDeprecating); err != nil {
-			return ctrl.Result{}, err
-		}
-		success, err = r.deprecateNode(ctx, nodeDeploy, nodeInfo)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
 		var status nodev1.NodeStatus
-		if success {
-			status = nodev1.NodeInactive
-		} else {
-			status = nodev1.NodeDeprecateFail
+		// 节点下线
+		err := retryV4.Do(
+			func() error {
+				if err = r.prepare(ctx, nodeDeploy, nodev1.NodeDeprecating); err != nil {
+					return err
+				}
+				success, err = r.deprecateNode(ctx, nodeDeploy, nodeInfo)
+				if success {
+					status = nodev1.NodeInactive
+				} else {
+					status = nodev1.NodeDeprecateFail
+				}
+				if err != nil {
+					return errors.Errorf("DeprecateNode failed,err:%s", err)
+				}
+				return nil
+			},
+			retryV4.Delay(5*time.Second),
+			retryV4.Attempts(uint(nodeDeploy.Spec.MaxRetry)),
+			retryV4.DelayType(retryV4.FixedDelay),
+		)
+		if err != nil {
+			klog.Warningf("节点下线时出现异常，导致无法正常上线 ,err: %v\n", err)
 		}
 
 		if err = r.finalize(ctx, nodeDeploy, status); err != nil {

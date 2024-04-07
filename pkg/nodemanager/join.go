@@ -37,7 +37,7 @@ type WorkNode struct {
 func (wn WorkNode) Join(ctx context.Context, sshclient *utils_ssh.Client) error {
 	masterHostAndPort, token, hash, err := GetWorkJoinInfo()
 	if err != nil {
-		klog.Fatalf("Failed to get k8s token and hash: %v", err)
+		klog.Errorf("Failed to get k8s token and hash: %v", err)
 	}
 	klog.Infof("成功获取到k8s的接入信息，kubeadm join %s --token %s  --discovery-token-ca-cert-hash %s\n", masterHostAndPort, token, hash)
 
@@ -145,7 +145,7 @@ func (wn WorkNode) CheckArch(ctx context.Context, sshclient *utils_ssh.Client) (
 	lines := strings.Split(temp_dir_str, "\n")
 	temp_dir := lines[0]
 	if err != nil {
-		klog.Fatalf("Failed to create new temp dir: %v", err)
+		klog.Errorf("Failed to create new temp dir: %v", err)
 	}
 	klog.Infof("The temporary directory [%v] is created\n", temp_dir)
 
@@ -171,7 +171,7 @@ func (k KubEdgeNode) CheckArch(ctx context.Context, sshclient *utils_ssh.Client)
 	lines := strings.Split(temp_dir_str, "\n")
 	temp_dir := lines[0]
 	if err != nil {
-		klog.Fatalf("Failed to create new temp dir: %v", err)
+		klog.Errorf("Failed to create new temp dir: %v", err)
 	}
 	klog.Infof("The temporary directory [%v] is created\n", temp_dir)
 
@@ -286,7 +286,7 @@ func (k KubEdgeNode) SetNodeComponents(ctx context.Context, sshclient *utils_ssh
 func (k KubEdgeNode) Join(ctx context.Context, sshclient *utils_ssh.Client) error {
 	cloudHosts, port, token, err := GetKubeEdgeJoinInfo()
 	if err != nil {
-		klog.Fatalf("Failed to get KubeEdge CloudHost  and token: %v", err)
+		klog.Errorf("Failed to get KubeEdge CloudHost  and token: %v", err)
 	}
 	klog.Infof("成功获取到KubeEdge CloudCore的接入信息，keadm join %v%s --token %s  ", cloudHosts, port, token)
 

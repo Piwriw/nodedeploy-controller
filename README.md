@@ -10,7 +10,7 @@ helm upgrade --install node-deploy node-deploy   -n controller --create-namespac
 - 2024.4.3  镜像：piwriw/nodedeploy-controller:kubeeedge-0.1 仅支持kubeedge节点上下线
 - 2024.4.3  镜像：piwriw/nodedeploy-controller:0.2  支持K8s 1.21.14 node节点上下线和支持kubeedge 1.12.3节点上下线
 - 2024.4.3  镜像：piwriw/nodedeploy-controller:0.3  优化：使用集群内认证token
-
+- 2024.4.7  镜像：piwriw/nodedeploy-controller:0.4  增强：支持Retry，重复次数
 ## CRD设计
 ```yaml
 apiVersion: node.nodedeploy/v1
